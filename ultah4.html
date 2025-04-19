@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ucapan Ulang Tahun</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: black;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    h1 {
+      margin-top: 3%;
+      font-size: 50px;
+      text-align: center;
+      color: white;
+      position: relative;
+      z-index: 2;
+    }
+
+    .photo-container {
+      text-align: center;
+      margin-top: 20px;
+      z-index: 2;
+      position: relative;
+    }
+
+    .photo-container img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid white;
+      box-shadow: 0 0 20px 5px white;
+    }
+
+    .marquee-container {
+      position: absolute;
+      bottom: 30px;
+      width: 100%;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .marquee-container marquee {
+      font-family: 'Ubuntu Condensed', sans-serif;
+      font-size: 18px;
+      color: white;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Selamat Ulang Tahun<br>MAHRUS ABDURROSYID</h1>
+
+  <div class="photo-container jpg">
+    <img src="mahrus.jpg.jpg" alt="Foto Mahrus"
+    style="border-radius: 50%; border: 4px solid goldenrod; box-shadow: 0 0 20px goldenrod;">
+  </div>
+
+  <div class="marquee-container">
+    <font color="white">[ </font>
+    <marquee scrollamount="5" width="630" height="20" behavior="alternate">
+      Semoga panjang umur, murah rejeki, dan sehat selalu. Semoga segala urusan di mudahkan oleh ALLAH SWT
+    </marquee>
+    <font color="white"> ]</font>
+  </div>
+
+  <canvas id="fireCanvas"></canvas>
+
+  <script>
+    // Semua JavaScript kembang api tetap sama
+    const canvas = document.getElementById('fireCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    function rndNum(num) {
+      return Math.random() * num;
+    }
+
+    function Vector(x, y) {
+      this.x = x;
+      this.y = y;
+      this.add = function(v) {
+        this.x += v.x;
+        this.y += v.y;
+      }
+    }
+
+    function Particle(pos, vel) {
+      this.pos = new Vector(pos.x, pos.y);
+      this.vel = vel;
+      this.finish = false;
+      this.start = 0;
+      this.update = function(time) {
+        if (time - this.start > 500) this.finish = true;
+        if (!this.finish) {
+          this.pos.add(this.vel);
+          this.vel.y += gravity;
+        }
+      }
+      this.draw = function() {
+        if (!this.finish) {
+          ctx.beginPath();
+          ctx.arc(this.pos.x, this.pos.y, 1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function Firework(x, y) {
+      this.pos = new Vector(x, y);
+      this.vel = new Vector(0, -rndNum(10) - 3);
+      this.color = `hsl(${rndNum(360)}, 100%, 50%)`;
+      this.size = 4;
+      this.finish = false;
+      this.start = 0;
+      let exploded = false;
+      let particles = [];
+
+      this.update = function(time) {
+        if (this.finish) return;
+
+        if (!exploded && this.vel.y < 0) {
+          this.pos.add(this.vel);
+          this.vel.y += gravity;
+        } else {
+          if (!exploded) {
+            exploded = true;
+            for (let i = 0; i < 100; i++) {
+              let vel = new Vector(-rndNum(10) + 5, -rndNum(10) + 5);
+              let p = new Particle(this.pos, vel);
+              p.start = time;
+              particles.push(p);
+            }
+          }
+
+          let done = 0;
+          for (let p of particles) {
+            p.update(time);
+            if (p.finish) done++;
+          }
+
+          if (done === particles.length) {
+            this.finish = true;
+          }
+        }
+      }
+
+      this.draw = function() {
+        ctx.fillStyle = this.color;
+        if (!exploded) {
+          ctx.beginPath();
+          ctx.arc(this.pos.x, this.pos.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          for (let p of particles) {
+            p.draw();
+          }
+        }
+      }
+    }
+
+    let fireworks = [];
+    let gravity = 0.2;
+
+    function init() {
+      for (let i = 0; i < 20; i++) {
+        fireworks.push(new Firework(rndNum(canvas.width), canvas.height));
+      }
+    }
+
+    function animate(time) {
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < fireworks.length; i++) {
+        let f = fireworks[i];
+        if (f.finish) {
+          fireworks[i] = new Firework(rndNum(canvas.width), canvas.height);
+          fireworks[i].start = time;
+        }
+        f.update(time);
+        f.draw();
+      }
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    init();
+    animate();
+  </script>
+</body>
+</html>
